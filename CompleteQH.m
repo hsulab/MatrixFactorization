@@ -33,7 +33,7 @@ b = det(L)*det(U)/det(P);
     
 if b < 1-tau2
     % dominant eigenvalue of B is well separated
-    %fprintf('Eigenvalues of B are well separated.\n');
+    fprintf('Eigenvalues of B are well separated.\n');
 
     % compute d=detA using an LU factorization with partial pivoting
     [L,U,P] = LU(A,'partial');
@@ -56,10 +56,21 @@ if b < 1-tau2
     % get approximate eigvec v
     v = P*(L^(-1))'*eye(4)(:,4);
     v = v/norm(v);
+
+    % form the matrix Q
+    Q = FormMatrixQ(v);
+    
+    % check if sign of Q needs changing
+    Q = eta*Q;
+        
+    % compute the upper triangle of H = Q'*A, 
+    % and set the lower triangle equal to the upper triangle
+    H = A_fro*Q'*A;
+    H = triu(H,0) + triu(H,1)';
     
 else
     % dominant eigenvalue of B is not well separated
-    %fprintf('Eigenvalues of B are not well separated.\n');
+    fprintf('Eigenvalues of B are not well separated.\n');
 
     % compute d=detA using an LU factorization with partial pivoting
     [L,U,P] = LU(A,'complete');
@@ -82,7 +93,7 @@ else
     % check iterative method
     if log10(abs(u22)) > -7.18
         % inverse iteration is fast
-        %fprintf('Inverse Iteration.\n');
+        fprintf('Inverse Iteration.\n');
     
         % calculate number of iterations
         n_iterations = ceil(15/(16.86+2*log10(abs(u22))));
@@ -103,7 +114,7 @@ else
     
     else
         % subspace iteration is fast
-        %fprintf('Inverse Subspace Iteration.\n');
+        fprintf('Inverse Subspace Iteration.\n');
     
         % compute Bs = LDL' by block LDL' factorization
         [L,D,P] = LDL(Bs,'block');
@@ -131,17 +142,17 @@ else
         w = CalcBpEigvec(Bp);
         v = V*w;
     end
-end
 
-% form the matrix Q
-Q = FormMatrixQ(v);
-
-% check if sign of Q needs changing
-Q = eta*Q;
+    % form the matrix Q
+    Q = FormMatrixQ(v);
     
-% compute the upper triangle of H = Q'*A, 
-% and set the lower triangle equal to the upper triangle
-H = A_fro*Q'*A;
-H = triu(H,0) + triu(H,1)';
+    % check if sign of Q needs changing
+    Q = eta*Q;
+        
+    % compute the upper triangle of H = Q'*A, 
+    % and set the lower triangle equal to the upper triangle
+    H = A_fro*Q'*A;
+
+end
 
 end
