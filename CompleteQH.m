@@ -14,34 +14,32 @@ function [Q,H] = CompleteQH(A)
 % normalize A
 [A, A_fro] = ScaleA(A);
 
-% tau2 Tolerance
+% tau2 Tolerance, checking sigma2
 tau2 = 1e-4;
-
-% check sign of A
-if det(A) >= eps
-    eta = 1;
-else
-    eta = -1;
-end
     
 % form B from A
 B = FormMatrixB(A);
     
 % compute b=det(B) from an LU factorization with partial pivoting
-[L,U,P] = LU(B,'partial');
-b = det(L)*det(U)/det(P);
+b = LU(B,'partial');
     
 if b < 1-tau2
     % dominant eigenvalue of B is well separated
     fprintf('Eigenvalues of B are well separated.\n');
 
     % compute d=detA using an LU factorization with partial pivoting
-    [L,U,P] = LU(A,'partial');
-    d = det(L)*det(U)/det(P);
+    d = LU(A,'partial');
 
     % change sign of B
     if d < 0
         B = -B; d = -d;
+    end
+
+    % check sign of A
+    if d >= eps
+        eta = 1;
+    else
+        eta = -1;
     end
     
     % estimate lambda1, a dominant eigenvalue of B
@@ -54,7 +52,7 @@ if b < 1-tau2
     [L,D,P] = LDL(Bs,'block');
     
     % get approximate eigvec v
-    v = P*(L^(-1))'*eye(4)(:,4);
+    v = P*(INV(L))'*eye(4)(:,4);
     v = v/norm(v);
 
     % form the matrix Q
@@ -73,12 +71,18 @@ else
     fprintf('Eigenvalues of B are not well separated.\n');
 
     % compute d=detA using an LU factorization with partial pivoting
-    [L,U,P] = LU(A,'complete');
-    d = det(L)*det(U)/det(P);
+    d = LU(A,'complete');
+
+    % check sign of A
+    if d >= eps
+        eta = 1;
+    else
+        eta = -1;
+    end
 
     % change sign of B
     if d < 0
-        B = -B;
+        B = -B; d = -d;
     end
     
     % estimate lambda1
@@ -98,17 +102,17 @@ else
         % calculate number of iterations
         n_iterations = ceil(15/(16.86+2*log10(abs(u22))));
 
-        % compute Bs = LDL' by block LDL' factorization
+        % compute P'BsP = LDL' by block LDL' factorization
         [L,D,P] = LDL(Bs,'block');
     
         % initial guess for v
-        v = P*(L^(-1))'*eye(4)(:,4);
+        v = P*(INV(L))'*eye(4)(:,4);
         v = v/norm(v);
     
         % iterations
         for i=1:n_iterations
             % update v using one step of inverse iteration with LDL'
-            v = (P^(-1))'*(L^(-1))*D*(L^(-1))'*(P^(-1))*v;
+            v = P*INV(L')*INV(D)*INV(L)*P'*v;
             v = v/norm(v);
         end
     
@@ -120,22 +124,22 @@ else
         [L,D,P] = LDL(Bs,'block');
     
         % Initial guess for v.
-        V = P*(L^(-1))'*eye(4)(:,3:4);
+        V = P*(INV(L))'*eye(4)(:,3:4);
 
         % iteration
         for i=1:2
             % orthonormalize V via QR factorization
             [Q,R] = QR(V);
-            V = Q(:,[1,2]);
+            V = Q;
     
             % update V using one step of inverse subspace iteration 
             % with LDL' factorization.
-            V = (P^(-1))'*(L^(-1))*D*(L^(-1))'*(P^(-1))*V;
+            V = P*INV(L')*INV(D)*INV(L)*P'*V;
         end
     
         % Orthonormalize V via QR factorization.
         [Q,R] = QR(V);
-        V = Q(:,[1,2]);
+        V = Q;
         Bp = V'*Bs*V;
     
         % Find w, eigenvector of smallest eigenvalue of Bp, by analytic formula.
@@ -150,7 +154,6 @@ else
     Q = eta*Q;
         
     % compute the upper triangle of H = Q'*A, 
-    % and set the lower triangle equal to the upper triangle
     H = A_fro*Q'*A;
 
 end

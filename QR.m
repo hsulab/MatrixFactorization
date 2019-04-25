@@ -11,7 +11,7 @@ function [Q,R] = QR(A, strategy)
 
 % get strategy
 if ~exist('strategy', 'var')
-    strategy = 'gs'; % default: Householder transformation
+    strategy = 'gs'; % default: Gram-Schmidt
 end
 
 % get dimension of A

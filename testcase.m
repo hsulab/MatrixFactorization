@@ -14,34 +14,38 @@ A = 1/1275*(A1*y+A2);
 %A = [0.1,0.2,0.3;0.1,-0.1,0;0.3,0.2,0.1;];
 
 %
-s = 10
-if s == 0
+s = 111;
+if s == 1
     tic
-    for i=1:1
+    for i=1:1000
         [Q,H] = SVDQH(A);
     end
     toc
 
-elseif s == 1
+elseif s == 11
     tic
-    for i=1:1
+    for i=1:1000
         [Q,H] = CompleteQH(A);
     end
     toc
 end
 
+% cond 
 cond(A)
 
 % reference
-[Q_ref,H_ref] = DirectQH(A);
-S = svd(A)
+[U,S,V] = svd(A);
+Q_ref = U*V';
+H_ref = V*S*V';
+Q_ref'*Q_ref;
 
-% Higham
-disp('Higham')
-[Q,H] = CompleteQH(A);
+% Direct
+disp('Direct')
+[Q,H] = DirectQH(A);
 fQ = norm(Q-Q_ref,'fro')/norm(Q_ref) % forward error in Q
 fH = norm(H-H_ref,'fro')/norm(H_ref) % forward error in H
 be = norm(A-Q*H,'fro')/norm(A,'fro') % back error 
+norm(Q'*Q-eye(3),'fro')
 
 % SVD
 disp('SVD')
@@ -49,3 +53,14 @@ disp('SVD')
 fQ = norm(Q-Q_ref,'fro')/norm(Q_ref) % forward error in Q
 fH = norm(H-H_ref,'fro')/norm(H_ref) % forward error in H
 be = norm(A-Q*H,'fro')/norm(A,'fro') % back error 
+norm(Q'*Q-eye(3),'fro')
+Q'*Q;
+
+% Higham
+disp('Higham')
+[Q,H] = CompleteQH(A);
+fQ = norm(Q-Q_ref,'fro')/norm(Q_ref) % forward error in Q
+fH = norm(H-H_ref,'fro')/norm(H_ref) % forward error in H
+be = norm(A-Q*H,'fro')/norm(A,'fro') % back error 
+norm(Q'*Q-eye(3),'fro')
+Q'*Q;

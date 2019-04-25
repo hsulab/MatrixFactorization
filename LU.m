@@ -37,6 +37,7 @@ if strcmp(pivotstrategy,'partial')
     P = eye(n);
 
     % calculate P
+    nchanges = 0; % times of exchange
     for k=1:n-1
         % find the max entry as the pivot
         pivot = max(abs(A(k:n,k)));
@@ -51,15 +52,25 @@ if strcmp(pivotstrategy,'partial')
 
         % interchange rows
         if k != row_ind
+            nchanges = nchanges + 1;
             P([k,row_ind],:) = P([row_ind,k],:);
             A([k,row_ind],:) = A([row_ind,k],:);
         end
     end
+
+    % calc det(P)
+    if mod(nchanges,2) == 0
+        detp = 1;
+    else 
+        detp = -1;
+    end
+
 elseif strcmp(pivotstrategy,'complete')
     % set initial P1 and P2
     P1 = eye(n); P2 = eye(n);
 
     % calculate P1 and P2
+    nchanges = 0;
     for k=1:n-1
         % find the max element as the pivot
         pivot = max(max(abs(A(k:n,k:n))));
@@ -76,12 +87,24 @@ elseif strcmp(pivotstrategy,'complete')
         end
 
         % interchange rows and cols
-        if (k != row_ind) || (k != col_ind)
+        if (k != row_ind) 
+            % row
+            nchanges = nchanges + 1;
             P1([k,row_ind],:) = P1([row_ind,k],:);
-            P2(:,[k,col_ind]) = P2(:,[col_ind,k]);
             A([k,row_ind],:) = A([row_ind,k],:);
+        elseif (k != col_ind)
+            % col
+            nchanges = nchanges + 1;
+            P2(:,[k,col_ind]) = P2(:,[col_ind,k]);
             A(:,[k,col_ind]) = A(:,[col_ind,k]);
         end
+    end
+
+    % calc det(P)
+    if mod(nchanges,2) == 0
+        detp = 1;
+    else 
+        detp = -1;
     end
 end
 
@@ -94,17 +117,33 @@ for k=1:n-1
     end
 end
 
-% output arguments
-varargout{1} = L;
-varargout{2} = U;
-
-% return permutation matrix 
-if nargin == 2
-    if strcmp(pivotstrategy,'partial')
-        varargout{3} = P;
+% output
+if nargout == 1 
+    % output det of A
+    if strcmp(pivotstrategy,'no')
+        varargout{1} = DET(L)*DET(U);
+    elseif strcmp(pivotstrategy,'partial')
+        varargout{1} = DET(L)*DET(U)*detp;
     elseif strcmp(pivotstrategy,'complete')
+        varargout{1} = DET(L)*DET(U)*detp;
+    end
+
+else
+    % output arguments
+    varargout{1} = L;
+    varargout{2} = U;
+
+    % output permutation arguments
+    if nargout == 2
+        continue
+    elseif nargout == 3
+        varargout{3} = P;
+    elseif nargout == 4
         varargout{3} = P1;
         varargout{4} = P2;
+    else 
+        error('Invalid Number of Output Arguments.')
     end
 end
+
 end
