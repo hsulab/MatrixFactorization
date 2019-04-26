@@ -27,7 +27,7 @@ if strcmp(strategy,'gs')
     for k=1:n
         % check full rank
         R(k,k) = norm(A(:,k)); % flops: nM+(n-1)A+1sqrt
-        if R(k,k) == 0
+        if abs(R(k,k)) <= 0
             error('Input matrix must be full rank.')
         end
     
